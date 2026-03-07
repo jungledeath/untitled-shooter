@@ -1,0 +1,15 @@
+# Ignore GameMaker build files and exports
+*.yyz
+*.exe
+*.zip
+*.dmg
+*.pkg
+*.apk
+*.aab
+*.app
+
+# Ignore local user workspace settings
+/options/local.yy
+
+# Ignore Mac OS hidden files
+.DS_Store
