@@ -7,6 +7,7 @@ function __InputConfigVerbs()
         DOWN,
         LEFT,
         RIGHT,
+		OK,
 		AIM_UP,
         AIM_DOWN,
         AIM_LEFT,
@@ -41,6 +42,7 @@ function __InputConfigVerbs()
 		InputDefineVerb(INPUT_VERB.PUPFIRE,   "pupfire",       vk_escape,           gp_shoulderr);
 		InputDefineVerb(INPUT_VERB.BOOST,   "boost",       vk_escape,           gp_shoulderl);
 		InputDefineVerb(INPUT_VERB.PAUSE,   "pause",       vk_escape,           gp_start);
+		InputDefineVerb(INPUT_VERB.OK,   "ok",       vk_escape,           gp_face1);
     }
     else //Flip A/B over on Switch
     {
@@ -57,6 +59,7 @@ function __InputConfigVerbs()
 		InputDefineVerb(INPUT_VERB.PUPFIRE,   "pupfire",   undefined,					gp_shoulderr);
 		InputDefineVerb(INPUT_VERB.BOOST,   "boost",       undefined,				gp_shoulderl);
 		InputDefineVerb(INPUT_VERB.PAUSE,   "pause",       vk_escape,				gp_start);
+		InputDefineVerb(INPUT_VERB.OK,   "ok",       vk_escape,           gp_face1);
     }
     
     //Define a cluster of verbs for moving around

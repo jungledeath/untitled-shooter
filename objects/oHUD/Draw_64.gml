@@ -37,3 +37,4 @@ draw_text(_screen_center, 20, "SCORE: " + string(global.player_score));
 
 // Reset the alignment back to normal so we don't accidentally mess up other text later!
 draw_set_halign(fa_left);
+

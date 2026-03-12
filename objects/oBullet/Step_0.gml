@@ -45,3 +45,20 @@ if (_spawner_hit != noone)
     // Destroy bullet
     instance_destroy();
 }
+
+// --- 5. CHECK FOR ENEMY BULLET HIT (ANTI-AIR) ---
+// Draw a line to see if we hit ANY incoming enemy projectile
+var _bullet_hit = collision_line(x, y, _next_x, _next_y, pEnemyProjectile, false, true);
+
+if (_bullet_hit != noone)
+{
+    // Vaporize the enemy bullet!
+    instance_destroy(_bullet_hit);
+    
+    // Bonus points for intercepting a shot
+    global.player_score += 10; 
+    
+    // Destroy our player bullet and stop reading code
+    instance_destroy();
+    return; 
+}

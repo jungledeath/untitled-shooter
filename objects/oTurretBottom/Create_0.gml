@@ -1,5 +1,5 @@
 attack_range = 300; // How far they can see
-fire_rate = 15;     // How many frames to wait between shots (60 = 1 second)
+fire_rate = 30;     // How many frames to wait between shots (60 = 1 second)
 fire_timer = 0;     // The actual stopwatch that ticks down
 is_manual = false; // Tracks if the gamepad is being used
 

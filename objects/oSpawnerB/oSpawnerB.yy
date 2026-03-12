@@ -1,16 +1,22 @@
 {
   "$GMObject":"",
-  "%Name":"oEnemyBlue",
-  "eventList":[],
+  "%Name":"oSpawnerB",
+  "eventList":[
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":3,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
+  ],
   "managed":true,
-  "name":"oEnemyBlue",
+  "name":"oSpawnerB",
   "overriddenProperties":[],
   "parent":{
     "name":"Enemies",
     "path":"folders/Objects/Enemies.yy",
   },
-  "parentObjectId":null,
-  "persistent":true,
+  "parentObjectId":{
+    "name":"pTarget",
+    "path":"objects/pTarget/pTarget.yy",
+  },
+  "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,
   "physicsFriction":0.2,
@@ -28,8 +34,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"sEnemyBlu",
-    "path":"sprites/sEnemyBlu/sEnemyBlu.yy",
+    "name":"sSpawnerB",
+    "path":"sprites/sSpawnerB/sSpawnerB.yy",
   },
   "spriteMaskId":null,
   "visible":true,

@@ -14,10 +14,10 @@
     "path":"folders/Objects/Enemies.yy",
   },
   "parentObjectId":{
-    "name":"pTarget",
-    "path":"objects/pTarget/pTarget.yy",
+    "name":"pEnemy",
+    "path":"objects/pEnemy/pEnemy.yy",
   },
-  "persistent":true,
+  "persistent":false,
   "physicsAngularDamping":0.1,
   "physicsDensity":0.5,
   "physicsFriction":0.2,

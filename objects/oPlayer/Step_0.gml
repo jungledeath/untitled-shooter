@@ -1,96 +1,187 @@
-var _x = 0;
-var _y = 0;
+// ==========================================
+// 1. GET INPUT (Gamepad, Keyboard, or Touch)
+// ==========================================
+var _input_x = 0;
+var _input_y = 0;
 
-if (InputPlayerUsingTouch()) 
+if (InputPlayerUsingTouch() && instance_exists(oTouchJoystick)) 
 {
-    if (instance_exists(oTouchJoystick)) 
-    {
-        _x = oTouchJoystick.v_joy.GetX();
-        _y = oTouchJoystick.v_joy.GetY();
-    }
+    _input_x = oTouchJoystick.v_joy.GetX();
+    _input_y = oTouchJoystick.v_joy.GetY();
 }
 else 
 {
-    _x = InputValue(INPUT_VERB.RIGHT) - InputValue(INPUT_VERB.LEFT);
-    _y = InputValue(INPUT_VERB.DOWN) - InputValue(INPUT_VERB.UP);
+    _input_x = InputValue(INPUT_VERB.RIGHT) - InputValue(INPUT_VERB.LEFT);
+    _input_y = InputValue(INPUT_VERB.DOWN) - InputValue(INPUT_VERB.UP);
 }
 
-// --- BOOST TRIGGER ---
-// Check if button is pressed, we aren't already boosting, AND we have enough energy
+// ==========================================
+// 2. BOOST LOGIC
+// ==========================================
 if (InputValue(INPUT_VERB.BOOST) > 0.5 && boost_speed == 0 && boost_energy >= boost_cost)
 {
     boost_speed = 4.5; 
-    boost_energy -= boost_cost; // Deduct the cost!
+    boost_energy -= boost_cost;
 }
 
-// --- BOOST REGEN ---
-// Slowly fill the bar back up when not full
 if (boost_energy < max_boost) 
 {
     boost_energy += boost_regen;
-    // Prevent it from going over 100
     boost_energy = min(boost_energy, max_boost); 
 }
 
-// --- BOOST FADE (FRICTION) ---
 if (boost_speed > 0)
 {
-    boost_speed -= 0.15; 
+    boost_speed -= 0.20; 
     boost_speed = max(0, boost_speed); 
 }
 
-// --- BOOST FADE (FRICTION) ---
-if (boost_speed > 0)
+// ==========================================
+// 3. MOVEMENT & SPEED POWER-UP
+// ==========================================
+var _speed_multiplier = 1; 
+
+if (global.speed_timer > 0)
 {
-    boost_speed -= 0.20; // Slowly fades out
-    boost_speed = max(0, boost_speed); // Stops exactly at 0
+    _speed_multiplier = 1.5; // Increases speed by 50%
+    global.speed_timer--; 
 }
 
-// --- MOVEMENT MATH ---
-var _mag = 0;
+// Calculate base movement based on input and multiplier
+var _hsp = (_input_x * move_speed) * _speed_multiplier;
+var _vsp = (_input_y * move_speed) * _speed_multiplier;
 
-if (abs(_x) > 0.1 || abs(_y) > 0.1) 
+// Add the boost momentum in the direction the tank is facing
+_hsp += lengthdir_x(boost_speed, image_angle);
+_vsp += lengthdir_y(boost_speed, image_angle);
+// ==========================================
+// AIMING & ROTATION
+// ==========================================
+is_aiming = false; 
+
+// 1. Get raw input from right thumbstick
+var _aim_x = InputValue(INPUT_VERB.AIM_RIGHT) - InputValue(INPUT_VERB.AIM_LEFT);
+var _aim_y = InputValue(INPUT_VERB.AIM_DOWN) - InputValue(INPUT_VERB.AIM_UP);
+
+if (InputPlayerUsingTouch() && instance_exists(oTouchJoystick)) 
 {
-    var _dir = point_direction(0, 0, _x, _y);
-    image_angle = _dir; // Face the direction we are pushing
-    _mag = clamp(point_distance(0, 0, _x, _y), 0, 1);
+    _aim_x = oTouchJoystick.v_joy.GetX();
+    _aim_y = oTouchJoystick.v_joy.GetY();
 }
 
-// Combine your base speed with the current boost momentum
-var _total_speed = (move_speed * _mag) + boost_speed;
+var _stick_pushed = (abs(_aim_x) > 0.2 || abs(_aim_y) > 0.2);
 
-if (_total_speed > 0)
+// 2. If pushing the stick, orbit the crosshair around the tank and turn laser on
+if (_stick_pushed && instance_exists(oCrosshair))
 {
-    // We use image_angle so the tank can boost forward 
-    // even if you let go of the movement stick!
-    x += lengthdir_x(_total_speed, image_angle);
-    y += lengthdir_y(_total_speed, image_angle);
+    var _aim_dir = point_direction(0, 0, _aim_x, _aim_y);
+    
+    // Snap the crosshair to a 150-pixel radius around the tank
+    oCrosshair.x = x + lengthdir_x(150, _aim_dir);
+    oCrosshair.y = y + lengthdir_y(150, _aim_dir);
+    
+    is_aiming = true;
 }
+
+// 3. If using a mouse, laser is on (assuming oCrosshair naturally follows the mouse)
+if (!InputPlayerUsingTouch() && !gamepad_is_connected(0))
+{
+    is_aiming = true;
+}
+
+// 4. Finally, rotate the tank to face the crosshair
+if (instance_exists(oCrosshair))
+{
+    image_angle = point_direction(x, y, oCrosshair.x, oCrosshair.y);
+}
+
+// ==========================================
+// 0. ANTI-OVERLAP (Fixes Sticky Collisions)
+// ==========================================
+// If an enemy gets pushed inside the tank, gently nudge the tank out 
+// so it doesn't get permanently paralyzed!
+var _stuck = instance_place(x, y, pTarget);
+if (_stuck != noone)
+{
+    var _push_dir = point_direction(_stuck.x, _stuck.y, x, y);
+    x += lengthdir_x(1, _push_dir);
+    y += lengthdir_y(1, _push_dir);
+}
+
+// ==========================================
+// 1. SOLID COLLISIONS (Freeze-Proof Spalding)
+// ==========================================
+if (ghost_mode == false)
+{
+    // HORIZONTAL
+    if (place_meeting(x + _hsp, y, pTarget))
+    {
+        if (_hsp != 0) 
+        {
+            var _dir = sign(_hsp);
+            var _limit = ceil(abs(_hsp)) + 1; // Safety limit!
+            var _count = 0;
+            
+            while (!place_meeting(x + _dir, y, pTarget) && _count < _limit)
+            {
+                x += _dir;
+                _count++;
+            }
+        }
+        _hsp = 0; 
+    }
+    x += _hsp; 
+
+    // VERTICAL
+    if (place_meeting(x, y + _vsp, pTarget))
+    {
+        if (_vsp != 0)
+        {
+            var _dir = sign(_vsp);
+            var _limit = ceil(abs(_vsp)) + 1; // Safety limit!
+            var _count = 0;
+            
+            while (!place_meeting(x, y + _dir, pTarget) && _count < _limit)
+            {
+                y += _dir;
+                _count++;
+            }
+        }
+        _vsp = 0; 
+    }
+    y += _vsp; 
+}
+else
+{
+    x += _hsp;
+    y += _vsp;
+}
+
 // --- 1. TICK DOWN TIMERS ---
 if (iframes > 0) iframes--;
 if (hit_flash > 0) hit_flash--; 
 
-// --- 2. CHECK FOR HAZARD COLLISION (Enemies AND Spawners) ---
-// Now we check for the entire pTarget family!
+// --- 2. CHECK FOR HAZARD COLLISION (Taking Damage) ---
 var _hazard = instance_place(x, y, pTarget);
 
 if (_hazard != noone && iframes <= 0)
 {
-    // Take damage based on exactly what we hit
     hp -= _hazard.damage; 
     hit_flash = 5; 
     
-    // The Hiccup
-    kb_direction = point_direction(_hazard.x, _hazard.y, x, y);
-    kb_speed = 3; 
+    // NOTE: Knockback removed here! 
+    // The tank will no longer hiccup backward when touching an alien.
 
-    // Invincibility frames
     iframes = 60; 
 }
 
-// --- 3. APPLY KNOCKBACK PHYSICS ---
+// --- 3. APPLY EXPLOSION KNOCKBACK PHYSICS ---
+// This is untouched! If a separate bomb object sets kb_speed > 0, 
+// the tank will still get pushed by the explosion.
 if (kb_speed > 0)
 {
+    // Note: We don't collision-check knockback here so explosions 
+    // can forcefully shove the tank through crowds if needed.
     x += lengthdir_x(kb_speed, kb_direction);
     y += lengthdir_y(kb_speed, kb_direction);
     kb_speed -= 0.5; 
@@ -100,29 +191,36 @@ else
     kb_speed = 0; 
 }
 
-// --- 4. SOLID COLLISIONS (Cannot pass through pTarget) ---
-if (ghost_mode == false)
+// ==========================================
+// KEEP PLAYER INSIDE THE ROOM (ON-SCREEN)
+// ==========================================
+var _margin_x = sprite_width / 2;
+var _margin_y = sprite_height / 2;
+
+x = clamp(x, _margin_x, room_width - _margin_x);
+y = clamp(y, _margin_y, room_height - _margin_y);
+
+// --- COMBO TIMER TICK DOWN ---
+if (global.combo_timer > 0) 
 {
-    // Check if we are physically inside an enemy or spawner
-    var _blocker = instance_place(x, y, pTarget);
-    if (_blocker != noone)
+    global.combo_timer--;
+    
+    if (global.combo_timer <= 0) 
     {
-        var _push_dir = point_direction(_blocker.x, _blocker.y, x, y);
-        var _push_count = 0; 
-        
-        // Push the tank out 1 pixel at a time until it's no longer inside!
-        // (Capped at 15 times per frame so GameMaker doesn't crash if you get cornered)
-        while (place_meeting(x, y, _blocker) && _push_count < 15)
-        {
-            x += lengthdir_x(1, _push_dir);
-            y += lengthdir_y(1, _push_dir);
-            _push_count++;
-        }
+        // Time ran out! Combo broken.
+        global.combo_count = 0; 
     }
 }
-
-// --- 5. DID WE DIE? ---
+// --- 4. DID WE DIE? ---
 if (hp <= 0)
 {
-    room_restart(); 
+    // 1. Clean up the attached turrets
+    if (instance_exists(turret_bottom)) instance_destroy(turret_bottom);
+    if (instance_exists(turret_top)) instance_destroy(turret_top);
+    
+    // 2. Destroy the tank itself
+    instance_destroy(); 
+    
+    // 3. Send them to the Game Over screen so it can check their final score!
+    room_goto(rGameOver); 
 }
