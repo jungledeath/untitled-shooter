@@ -1,4 +1,4 @@
-hp = 800;
+hp = 400;
 move_speed = 0;
 damage = 10;
 
@@ -9,7 +9,7 @@ spawn_rate_decay = 5;     // Shaves 5 frames off the timer every time it spawns 
 
 // Add between 0 and 2 seconds (120 frames) of random delay to the VERY FIRST spawn.
 // This ensures multiple spawners in the same room fire off-beat from each other.
-spawn_timer = spawn_rate_current + irandom_range(400, 800);
+spawn_timer = irandom_range(0, 120);
 
 // Capping the spawner
 max_enemies = 30;  // The total number we want to spawn

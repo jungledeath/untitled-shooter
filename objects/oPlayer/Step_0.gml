@@ -59,39 +59,39 @@ _vsp += lengthdir_y(boost_speed, image_angle);
 // ==========================================
 is_aiming = false; 
 
-// 1. Get raw input from right thumbstick
+// 1. Get raw aim input from the right stick
 var _aim_x = InputValue(INPUT_VERB.AIM_RIGHT) - InputValue(INPUT_VERB.AIM_LEFT);
 var _aim_y = InputValue(INPUT_VERB.AIM_DOWN) - InputValue(INPUT_VERB.AIM_UP);
 
-if (InputPlayerUsingTouch() && instance_exists(oTouchJoystick)) 
+// 2. ONLY change angle and turn on laser IF actively pushing the stick
+if (abs(_aim_x) > 0.2 || abs(_aim_y) > 0.2)
 {
-    _aim_x = oTouchJoystick.v_joy.GetX();
-    _aim_y = oTouchJoystick.v_joy.GetY();
-}
-
-var _stick_pushed = (abs(_aim_x) > 0.2 || abs(_aim_y) > 0.2);
-
-// 2. If pushing the stick, orbit the crosshair around the tank and turn laser on
-if (_stick_pushed && instance_exists(oCrosshair))
-{
-    var _aim_dir = point_direction(0, 0, _aim_x, _aim_y);
-    
-    // Snap the crosshair to a 150-pixel radius around the tank
-    oCrosshair.x = x + lengthdir_x(150, _aim_dir);
-    oCrosshair.y = y + lengthdir_y(150, _aim_dir);
-    
+    image_angle = point_direction(0, 0, _aim_x, _aim_y);
     is_aiming = true;
 }
 
-// 3. If using a mouse, laser is on (assuming oCrosshair naturally follows the mouse)
-if (!InputPlayerUsingTouch() && !gamepad_is_connected(0))
-{
-    is_aiming = true;
-}
-
-// 4. Finally, rotate the tank to face the crosshair
+// 3. Pin the crosshair strictly to the tank so it never gets left behind
 if (instance_exists(oCrosshair))
 {
+    oCrosshair.x = x + lengthdir_x(150, image_angle);
+    oCrosshair.y = y + lengthdir_y(150, image_angle);
+}
+// 4. TANK ROTATION LOGIC
+if (InputPlayerUsingTouch() && instance_exists(oTouchJoystick))
+{
+    // ON MOBILE: Read the raw analog decimal values directly from the joystick
+    // This provides a full 360 degrees of smooth rotation instead of 8 locked directions
+    var _move_x = oTouchJoystick.v_joy.GetX();
+    var _move_y = oTouchJoystick.v_joy.GetY();
+    
+    if (abs(_move_x) > 0.2 || abs(_move_y) > 0.2)
+    {
+        image_angle = point_direction(0, 0, _move_x, _move_y);
+    }
+}
+else if (instance_exists(oCrosshair))
+{
+    // ON PC/CONSOLE: Tank rotates to face the crosshair
     image_angle = point_direction(x, y, oCrosshair.x, oCrosshair.y);
 }
 

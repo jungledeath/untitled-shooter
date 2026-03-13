@@ -15,7 +15,7 @@ if (spawned_count < max_enemies)
     {
  // 2. CALCULATE SPAWN POSITION 
 // Pick a random distance between 30 and 80 pixels away
-var _dist = irandom_range(30, 80); 
+var _dist = irandom_range(0, 5); 
 var _angle = irandom(359);
 
 // Create the variables HERE, before the loop tries to read them!

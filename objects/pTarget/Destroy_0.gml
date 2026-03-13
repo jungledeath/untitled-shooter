@@ -4,7 +4,7 @@
 if (global.powerup_cooldown <= 0)
 {
     var _roll = irandom(99); 
-    var _drop_chance = 10; // 10% chance to drop *something*
+    var _drop_chance = 15; // 10% chance to drop *something*
 
     if (_roll < _drop_chance) 
     {
